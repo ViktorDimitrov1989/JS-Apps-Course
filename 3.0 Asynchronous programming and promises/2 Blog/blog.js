@@ -10,7 +10,6 @@ function attachEvents() {
     $('#btnLoadPosts').click(loadPostsClicked);
     $('#btnViewPost').click(viewPostClicked);
 
-
     function loadPostsClicked() {
         let getPostsRequest = {
             method: "GET",
