@@ -10,6 +10,7 @@ function attachEvents() {
     $('.add').click(addCatch);
 
     function addCatch() {
+
         let obj = {
             "angler": `${$('#addForm .angler').val()}`,
             "weight": $('#addForm .weight').val(),
@@ -18,6 +19,7 @@ function attachEvents() {
             "bait": `${$('#addForm .bait').val()}`,
             "captureTime": $('#addForm .captureTime').val()
         };
+
         $.ajax({
             method: "POST",
             url: serviceUrl,
@@ -29,7 +31,7 @@ function attachEvents() {
 
 
     }
-    
+
     function deleteCatch() {
         $.ajax({
             method: "DELETE",
@@ -41,6 +43,7 @@ function attachEvents() {
     }
 
     function loadCatches() {
+
         $('#catches').empty();
         $.get({
             url: serviceUrl,
@@ -90,6 +93,7 @@ function attachEvents() {
     }
 
     function listAllCatches(result) {
+
         for (let obj of result) {
             let mainDiv = $(`<div class="catch" data-id="${obj._id}">`);
             let anglerLabel = $('<label>Angler</label>');
@@ -125,7 +129,8 @@ function attachEvents() {
                 .appendTo($('#catches'));
         }
     }
-}
-function showError(error) {
-    console.log(error.statusText);
+
+    function showError(error) {
+        console.log(error.statusText);
+    }
 }

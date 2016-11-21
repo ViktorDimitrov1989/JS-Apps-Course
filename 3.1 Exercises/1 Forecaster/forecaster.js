@@ -23,9 +23,8 @@ function attachEvents() {
                     }
                 }
             })
-            .catch(displayError)
             .then(() => {
-                $.get(`https://judgetests.firebaseio.com/forecast/today/${townObj.code}.json `)
+                $.get(`https://judgetests.firebaseio.com/forecast/today/${townObj.code}.json`)
                     .then(dailyForecast)
                     .catch(displayError);
             })
@@ -42,6 +41,7 @@ function attachEvents() {
     }
 
     function dailyForecast(dailyForecast) {
+        $('span.condition').remove();
         let conditionSpan = $('<span class="condition">');
         let townData = $('<span class="forecast-data">').text(dailyForecast.name);
         let conditionStr = `${dailyForecast.forecast.low}${conditionObj.Degrees}/${dailyForecast.forecast.high}${conditionObj.Degrees}`;
@@ -58,6 +58,7 @@ function attachEvents() {
     }
 
     function threeDaysForecast(threeDaysForecast) {
+        $('span.upcoming').remove();
         let forecastArray = threeDaysForecast.forecast;
         for (let obj of forecastArray) {
             let conditionStr = `${obj.low}${conditionObj.Degrees}/${obj.high}${conditionObj.Degrees}`;
