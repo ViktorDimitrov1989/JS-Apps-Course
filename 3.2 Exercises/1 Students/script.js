@@ -41,7 +41,6 @@
                 FacultyNumber: facultyNumber,
                 Grade: grade
             };
-
             $.ajax({
                 method: "POST",
                 url: baseUrl,
@@ -49,6 +48,7 @@
                 data: JSON.stringify(student)
             })
                 .then(() => {
+                    $('#results').empty();
                     $.ajax({
                         method: "GET",
                         url: baseUrl,
@@ -63,8 +63,6 @@
         $('#lastName').val('');
         $('#grade').val('');
         $('#facultyNumber').val('');
-
-
     }
 
     function loadStudents(students) {
