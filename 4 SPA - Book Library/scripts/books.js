@@ -9,6 +9,8 @@ function startApp() {
 
     //sessionStorage.clear(); // Clear user auth data
     showHideMenuLinks();
+    $('main > section').hide();
+    showHomeView();
     // Bind the navigation menu links
     $("#linkHome").click(showHomeView);
     $("#linkLogin").click(showLoginView);
