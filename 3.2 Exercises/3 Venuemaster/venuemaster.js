@@ -61,7 +61,32 @@ function attachEvents() {
 
             $(`#${venue._id} .info`).click(() => {
                 $(`#${venue._id} .venue-details`).attr('style','display: block');
-            })
+                $('.purchase').click(() => {
+                    let quantity = $('.quantity option:selected').val();
+                    let total = quantity * venue.price;
+                    $('#venue-info').empty();
+                    let html = `<span class="head">Confirm purchase</span>
+                                <div class="purchase-info">
+                                  <span>${venue.name}</span>
+                                  <span>${quantity} x ${venue.price}</span>
+                                  <span>Total: ${total} lv</span>
+                                  <input type="button" value="Confirm">
+                                </div>
+                                `;
+                    $('#venue-info').append(html);
+                    $('input[value=Confirm]').click(() => {
+                        $.ajax({
+                            method:"POST",
+                            url: `${baseUrl}rpc/${kinveyId}/custom/purchase?venue=${venue._id}&qty=${quantity}`,
+                            headers: authHeaders
+                        })
+                            .then((object) => {
+                                $('#venue-info').append(object.html);
+                            })
+                    })
+                });
+            });
+
         }
     }
 
