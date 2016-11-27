@@ -6,6 +6,50 @@ function startApp() {
         'Authorization': 'Basic ' + btoa(appKey + ':' + appSecret)
     };
 
+    //Handling events in SPA app
+    let system = {
+        displayError: (error) => {
+            let errorBox = $('#errorBox');
+            errorBox.text(error.responseJSON.error);
+            errorBox.show();
+
+        },
+        displayInfoMsg: (msg) => {
+            let infoBox = $('#infoBox');
+            infoBox.text(msg);
+            infoBox.show();
+            setTimeout(() => {
+                infoBox.hide();
+            }, 2500)
+        },
+        displayLoadingBar: {
+
+            ajaxStart: function () {
+                $("#loadingBox").show()
+            }
+            ,
+            ajaxStop: function () {
+                $("#loadingBox").hide()
+            }
+        },
+        getKinveyAuthHeaders: () => {
+            return {"Authorization": "Kinvey " + sessionStorage.getItem('authToken')}
+        }
+
+    };
+    //Hide Info and errorBox on click
+    $('#infoBox, #errorBox').click(function () {
+        $(this).fadeOut();
+    });
+    // Attach AJAX "loading" event listener
+    $(document).on({
+        ajaxStart: function () {
+            $("#loadingBox").show()
+        },
+        ajaxStop: function () {
+            $("#loadingBox").hide()
+        }
+    });
     //Draw menu links
     showHideMenuLinks();
     showView('viewHome');
@@ -24,12 +68,17 @@ function startApp() {
         showView('viewRegister')
     });
     $('#linkListAds').click(() => {
-        showView('viewListAds')
+        listAds();
+        showView('viewAds')
+    });
+    $('#linkCreateAd').click(() => {
+        showView('viewCreateAd');
     });
     //Button click's section
     $('#buttonLoginUser').click(loginUser);
     $('#buttonRegisterUser').click(registerUser);
     $('#linkLogout').click(logout);
+    $('#buttonCreateAd').click(createAd);
 
     //Take care of showing only needed links
     function showHideMenuLinks() {
@@ -71,9 +120,13 @@ function startApp() {
             headers: authHeaders,
             data: data
         })
-            .then(saveUserAuth)
-            .done(eventHandling.displayInfoMsg('Login successful'))
-            .catch(eventHandling.displayError);
+            .then(loginSuccess)
+            .catch(system.displayError);
+
+        function loginSuccess(userInfo) {
+            saveUserAuth(userInfo);
+            system.displayInfoMsg('Registration successful');
+        }
     }
 
     //Logout User
@@ -81,7 +134,7 @@ function startApp() {
         sessionStorage.clear();
         showHideMenuLinks();
         showView('viewHome');
-        eventHandling.displayInfoMsg('Logout successful');
+        system.displayInfoMsg('Logout successful');
     }
 
     //Register User
@@ -97,11 +150,16 @@ function startApp() {
             headers: authHeaders
 
         })
-            .then(saveUserAuth)
-            .then(eventHandling.displayInfoMsg('Login successful'))
-            .catch(displayError)
+            .then(registerSuccess)
+            .catch(system.displayError);
+
+        function registerSuccess(userInfo) {
+            saveUserAuth(userInfo);
+            system.displayInfoMsg('Registration successful');
+        }
     }
 
+    //Authenticate user - login/register
     function saveUserAuth(userObj) {
         sessionStorage.setItem('authToken', `${userObj._kmd.authtoken}`);
         sessionStorage.setItem('username', `${userObj.username}`);
@@ -110,22 +168,91 @@ function startApp() {
         showView('viewHome');
     }
 
-    let eventHandling = {
-        displayError: (error) => {
-            let errorBox = $('#errorBox');
-            errorBox.text(error.responseJSON.error);
-            errorBox.show();
+    //List Advertisements
+    function listAds() {
+        $.ajax({
+            method: "GET",
+            url: `${baseUrl}appdata/${appKey}/offers`,
+            headers: system.getKinveyAuthHeaders()
+        })
+            .then(successListAds)
+            .catch(system.displayError);
 
-        },
-        displayInfoMsg: (msg) => {
-            let infoBox = $('#infoBox');
-            infoBox.text(msg);
-            infoBox.show();
-        },
-        displayLoadingBar: () => {
-
+        function successListAds(adverts) {
+            let table = $('#ads table tbody');
+            table.empty();
+            table.append(`<tr>
+                    <th>Title</th>
+                    <th>Publisher</th>
+                    <th>Description</th>
+                    <th>Price</th>
+                    <th>Date Published</th>
+                </tr>`);
+            appendAdvertsRow(table, adverts);
         }
-    };
+        function appendAdvertsRow(table, adverts) {
+            for (let advert of adverts) {
+                let tr = $(`<tr><td>${advert.title}</td>
+                            <td>${advert.publisher}</td>
+                            <td>${advert.description}</td>
+                            <td>${advert.price}</td>
+                            <td>${advert.dateOfPublishing}</td>
+                            </tr>`);
+                if(advert._acl.creator == sessionStorage.getItem('userId')){
+                    let td = $(`<td></td>`);
+                    let editLink = $(`<a href ='#' id="editAd">[Edit]</a>&nbsp`)
+                        .click(function() {
+                            editAdvert(advert)
+                        });
+
+                    let deleteLink = $(`<a href ='#' id="deleteAd">[Delete]</a>`)
+                        .click(function() {
+                            deleteAdvert(advert)
+                        });
+
+                    td.append(editLink)
+                        .append(deleteLink)
+                        .appendTo(tr);
+
+                }
+                else{
+                    tr.append(`<td></td>`);
+                }
+
+                table.append(tr);
+            }
+        }
+        function editAdvert(advert) {
+            //Edit ajax request TODO
+        }
+        function deleteAdvert(advert) {
+            //Delete ajax request TODO
+        }
+    }
+
+    //Create Advertisement
+    function createAd() {
+        let data = {
+            title: $('#formCreateAd input[name=title]').val(),
+            dateOfPublishing: $('#formCreateAd input[name=datePublished]').val(),
+            publisher: sessionStorage.getItem('username'),
+            description: $('#formCreateAd textarea[name=description]').val(),
+            price: $('#formCreateAd input[name=price]').val()
+        };
+        $.ajax({
+            method: "POST",
+            url: `${baseUrl}appdata/${appKey}/offers`,
+            data: data,
+            headers: system.getKinveyAuthHeaders()
+        })
+            .then(successfulCreateAd)
+            .catch(system.displayError);
+        function successfulCreateAd() {
+            listAds();
+            showView('viewAds');
+            system.displayInfoMsg('Advertisement is successfully created')
+        }
+    }
 
 
 }
