@@ -211,8 +211,6 @@ function startApp() {
                 $('<td>').text(book.description),
                 $('<td>').append(links)
             ));
-
-
         }
     }
 
