@@ -3,8 +3,12 @@ function startApp() {
     const baseUrl = 'https://baas.kinvey.com/';
     const appKey = 'kid_Skj11XvGl';
     const appSecret = '9dea3c14c7654011abc8746529148601';
+    const masterSecret = 'ee08675273c74df4aad2434a09d7e676';
     const authHeaders = {
         'Authorization': 'Basic ' + btoa(appKey + ':' + appSecret)
+    };
+    const masterHeaders = {
+        'Authorization' : 'Basic ' + btoa(appKey + ':' + masterSecret)
     };
 
     //Handling events in SPA app
@@ -188,12 +192,15 @@ function startApp() {
                     <th>Description</th>
                     <th>Price</th>
                     <th>Date Published</th>
+                    <th>Views</th>
                 </tr>`);
             appendAdvertsRow(table, adverts);
         }
 
         //Append adverts in site table + hook link events for every advert
         function appendAdvertsRow(table, adverts) {
+            //Sort adverts by views
+            adverts = [...adverts].sort((a,b) => {return b.views - a.views});
             for (let advert of adverts) {
                 let tr = $(`<tr><td>${advert.title}</td>
                             <td>${advert.publisher}</td>
@@ -257,7 +264,7 @@ function startApp() {
         }
         //Increase advert views
         function increaseAdvertViews(advert) {
-            let views = advert.views + 1;
+            let views = Number(advert.views) + 1;
             let data = {
                 publisher: advert.publisher,
                 title: advert.title,
@@ -269,13 +276,13 @@ function startApp() {
             $.ajax({
                 method: "GET",
                 url: `${baseUrl}appdata/${appKey}/offers/${advert._id}`,
-                headers: authHeaders
+                headers: system.getKinveyAuthHeaders()
             })
                 .then(() => {
                     $.ajax({
                         method: "PUT",
                         url: `${baseUrl}appdata/${appKey}/offers/${advert._id}`,
-                        headers: system.getKinveyAuthHeaders(),
+                        headers: masterHeaders,
                         data: data
                     })
                 })
@@ -302,18 +309,19 @@ function startApp() {
             $('#formEditAd input[name=datePublished]').val(advert.dateOfPublishing);
             $('#formEditAd input[name=price]').val(advert.price);
             showView('viewEditAd');
-            $('#buttonEditAd').click(editAdvert);
+            $('#buttonEditAd').click(() => {editAdvert(advert)});
         }
 
         //PUT request to server with new data for the advert
-        function editAdvert() {
+        function editAdvert(advert) {
             let id = $('#formEditAd input[name=id]').val();
             let data = {
                 publisher: $('#formEditAd input[name=publisher]').val(),
                 title: $('#formEditAd input[name=title]').val(),
                 description: $('#formEditAd textarea[name=description]').val(),
                 dateOfPublishing: $('#formEditAd input[name=datePublished]').val(),
-                price: $('#formEditAd input[name=price]').val()
+                price: $('#formEditAd input[name=price]').val(),
+                views: advert.views
             };
             $.ajax({
                 method: "PUT",
